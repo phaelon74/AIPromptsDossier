@@ -242,7 +242,7 @@ namespace AIDungeonPrompts.Web
 		}
 		
 		// Read password from environment variable or Docker Secret
-		var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
+		var password = System.Environment.GetEnvironmentVariable("DB_PASSWORD");
 		
 		if (string.IsNullOrWhiteSpace(password) && File.Exists(ConfigurationConstants.DatabasePasswordSecretPath))
 		{
@@ -274,7 +274,7 @@ namespace AIDungeonPrompts.Web
 		var connectionString = Configuration.GetConnectionString(DatabaseConnectionName);
 		
 		// Read password from environment variable or Docker Secret
-		var password = Environment.GetEnvironmentVariable("DB_PASSWORD");
+		var password = System.Environment.GetEnvironmentVariable("DB_PASSWORD");
 		
 		if (string.IsNullOrWhiteSpace(password) && File.Exists(ConfigurationConstants.SerilogPasswordSecretPath))
 		{
