@@ -90,7 +90,7 @@ namespace AIDungeonPrompts.Infrastructure.SystemSettings
 				setting.DateEdited = DateTime.UtcNow;
 			}
 
-			await _dbContext.SaveChangesAsync();
+			await _dbContext.SaveChangesAsync(default);
 			_logger.LogInformation($"Max page size updated to: {maxSize}");
 		}
 
@@ -116,7 +116,7 @@ namespace AIDungeonPrompts.Infrastructure.SystemSettings
 				setting.DateEdited = DateTime.UtcNow;
 			}
 
-			await _dbContext.SaveChangesAsync();
+			await _dbContext.SaveChangesAsync(default);
 			_logger.LogInformation($"User registration enabled: {enabled}");
 		}
 	}

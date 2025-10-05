@@ -64,7 +64,7 @@ namespace AIDungeonPrompts.Infrastructure.Identity
 				await ResetFailedAttemptsAsync(userId);
 			}
 
-			await _dbContext.SaveChangesAsync();
+			await _dbContext.SaveChangesAsync(default);
 		}
 
 		public async Task<bool> IsAccountLockedAsync(int userId)
@@ -84,7 +84,7 @@ namespace AIDungeonPrompts.Infrastructure.Identity
 			{
 				activeLockout.IsActive = false;
 				_dbContext.AccountLockouts.Update(activeLockout);
-				await _dbContext.SaveChangesAsync();
+				await _dbContext.SaveChangesAsync(default);
 				return false;
 			}
 
@@ -140,7 +140,7 @@ namespace AIDungeonPrompts.Infrastructure.Identity
 			}
 
 			await ResetFailedAttemptsAsync(userId);
-			await _dbContext.SaveChangesAsync();
+			await _dbContext.SaveChangesAsync(default);
 			
 			_logger.LogInformation($"Account {userId} has been unlocked");
 		}

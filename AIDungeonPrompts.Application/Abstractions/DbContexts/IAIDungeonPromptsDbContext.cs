@@ -22,6 +22,9 @@ namespace AIDungeonPrompts.Application.Abstractions.DbContexts
 		DbSet<User> Users { get; set; }
 		DbSet<WorldInfo> WorldInfos { get; set; }
 		DbSet<ServerFlag> ServerFlags { get; set; }
+		DbSet<SystemSetting> SystemSettings { get; set; }
+		DbSet<AccountLockout> AccountLockouts { get; set; }
+		DbSet<LoginAttempt> LoginAttempts { get; set; }
 
 		EntityEntry<TEntity> Entry<TEntity>(TEntity entity) where TEntity : class;
 
