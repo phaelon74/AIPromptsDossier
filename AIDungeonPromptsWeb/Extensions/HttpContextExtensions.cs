@@ -18,18 +18,19 @@ namespace AIDungeonPrompts.Web.Extensions
 			var claims = new List<Claim>
 			{
 				new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-				new(ClaimValueConstants.CanEdit, RoleHelper.CanEdit(user.Role).ToString())
+				new(ClaimValueConstants.CanEdit, RoleHelper.CanEdit(user.Role).ToString()),
+				new(ClaimValueConstants.IsAdmin, RoleHelper.IsAdmin(user.Role).ToString())
 			};
 
 			var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
-			var authProperties = new AuthenticationProperties
-			{
-				AllowRefresh = true,
-				ExpiresUtc = DateTimeOffset.UtcNow.AddDays(365),
-				IsPersistent = true,
-				IssuedUtc = DateTimeOffset.UtcNow
-			};
+		var authProperties = new AuthenticationProperties
+		{
+			AllowRefresh = true,
+			ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30), // Reduced from 365 to 30 days for security
+			IsPersistent = true,
+			IssuedUtc = DateTimeOffset.UtcNow
+		};
 
 			return context.SignInAsync(
 				CookieAuthenticationDefaults.AuthenticationScheme,

@@ -15,5 +15,10 @@ namespace AIDungeonPrompts.Application.Helpers
 			const RoleEnum deleteRoles = RoleEnum.Delete;
 			return (deleteRoles & role) != 0;
 		}
+
+		public static bool IsAdmin(RoleEnum role)
+		{
+			return (role & RoleEnum.Admin) != 0;
+		}
 	}
 }

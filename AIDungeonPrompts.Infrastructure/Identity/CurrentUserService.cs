@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using AIDungeonPrompts.Application.Abstractions.Identity;
 using AIDungeonPrompts.Application.Queries.GetUser;
@@ -10,7 +11,9 @@ namespace AIDungeonPrompts.Infrastructure.Identity
 	{
 		private readonly ILogger<CurrentUserService> _logger;
 		private readonly IMediator _mediator;
-		private GetUserViewModel? _currentUser;
+		
+		// Use AsyncLocal<T> for thread-safe storage in async scenarios
+		private readonly AsyncLocal<GetUserViewModel?> _currentUser = new();
 
 		public CurrentUserService(ILogger<CurrentUserService> logger, IMediator mediator)
 		{
@@ -26,12 +29,12 @@ namespace AIDungeonPrompts.Infrastructure.Identity
 				_logger.LogWarning($"User with ID {userId} could not be found.");
 			}
 
-			_currentUser = user;
+			_currentUser.Value = user;
 		}
 
 		public bool TryGetCurrentUser(out GetUserViewModel? user)
 		{
-			user = _currentUser;
+			user = _currentUser.Value;
 			return user != null;
 		}
 	}

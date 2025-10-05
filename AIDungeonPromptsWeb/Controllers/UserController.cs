@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using AIDungeonPrompts.Application.Abstractions.Identity;
+using AIDungeonPrompts.Application.Abstractions.Infrastructure;
 using AIDungeonPrompts.Application.Commands.CreateUser;
 using AIDungeonPrompts.Application.Commands.UpdateUser;
 using AIDungeonPrompts.Application.Exceptions;
@@ -20,11 +21,13 @@ namespace AIDungeonPrompts.Web.Controllers
 	{
 		private readonly ICurrentUserService _currentUserService;
 		private readonly IMediator _mediator;
+		private readonly ISystemSettingsService _systemSettingsService;
 
-		public UserController(IMediator mediator, ICurrentUserService currentUserService)
+		public UserController(IMediator mediator, ICurrentUserService currentUserService, ISystemSettingsService systemSettingsService)
 		{
 			_mediator = mediator;
 			_currentUserService = currentUserService;
+			_systemSettingsService = systemSettingsService;
 		}
 
 		[Authorize]
@@ -67,7 +70,8 @@ namespace AIDungeonPrompts.Web.Controllers
 			}
 			catch (UsernameNotUniqueException)
 			{
-				ModelState.AddModelError(nameof(model.Username), "Username already exists");
+				// Generic error message to prevent username enumeration
+				ModelState.AddModelError(string.Empty, "Update failed. The username or password cannot be used. Please try different values.");
 				return View(model);
 			}
 
@@ -99,82 +103,116 @@ namespace AIDungeonPrompts.Web.Controllers
 
 		public IActionResult LogIn(string returnUrl) => View(new LogInModel {ReturnUrl = returnUrl});
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> LogIn(LogInModel model, CancellationToken cancellationToken)
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> LogIn(LogInModel model, CancellationToken cancellationToken)
+	{
+		if (!ModelState.IsValid)
 		{
-			if (!ModelState.IsValid)
-			{
-				return View(model);
-			}
-
-			try
-			{
-				GetUserViewModel? user =
-					await _mediator.Send(new LogInQuery(model.Username, model.Password), cancellationToken);
-				await HttpContext.SignInUserAsync(user);
-			}
-			catch (LoginFailedException)
-			{
-				ModelState.AddModelError(string.Empty, "Username or Password was incorrect");
-				return View(model);
-			}
-
-			if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-			{
-				return Redirect(model.ReturnUrl);
-			}
-
-			return RedirectToAction("Index", "Home");
-		}
-
-		public IActionResult LogOut()
-		{
-			HttpContext.SignOutAsync();
-			return RedirectToAction("Index", "Home");
-		}
-
-		public IActionResult Register(string returnUrl)
-		{
-			var model = new RegisterUserModel {ReturnUrl = returnUrl};
 			return View(model);
 		}
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Register(RegisterUserModel model, CancellationToken cancellationToken)
+		try
 		{
-			if (!string.Equals(model.Password, model.PasswordConfirm))
-			{
-				ModelState.AddModelError(nameof(model.PasswordConfirm), "Passwords do not match");
-			}
+			var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+			GetUserViewModel? user =
+				await _mediator.Send(new LogInQuery(model.Username, model.Password, ipAddress), cancellationToken);
+			await HttpContext.SignInUserAsync(user);
+		}
+		catch (AccountLockedException ex)
+		{
+			ModelState.AddModelError(string.Empty, ex.Message);
+			return View(model);
+		}
+		catch (LoginBackoffException ex)
+		{
+			ModelState.AddModelError(string.Empty, ex.Message);
+			return View(model);
+		}
+		catch (LoginFailedException)
+		{
+			ModelState.AddModelError(string.Empty, "Username or Password was incorrect");
+			return View(model);
+		}
 
-			if (!ModelState.IsValid)
-			{
-				return View(model);
-			}
+		if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+		{
+			return Redirect(model.ReturnUrl);
+		}
 
-			try
+		return RedirectToAction("Index", "Home");
+	}
+
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public IActionResult LogOut()
+	{
+		HttpContext.SignOutAsync();
+		return RedirectToAction("Index", "Home");
+	}
+
+	public async Task<IActionResult> Register(string returnUrl, CancellationToken cancellationToken)
+	{
+		// Check if registration is enabled (unless user is already logged in to convert transient account)
+		if (!_currentUserService.TryGetCurrentUser(out _))
+		{
+			bool registrationEnabled = await _systemSettingsService.IsUserRegistrationEnabledAsync();
+			if (!registrationEnabled)
 			{
-				if (_currentUserService.TryGetCurrentUser(out GetUserViewModel? user))
-				{
+				return View("RegistrationDisabled");
+			}
+		}
+
+		var model = new RegisterUserModel {ReturnUrl = returnUrl};
+		return View(model);
+	}
+
+	[HttpPost]
+	[ValidateAntiForgeryToken]
+	public async Task<IActionResult> Register(RegisterUserModel model, CancellationToken cancellationToken)
+	{
+		// Check if registration is enabled (unless user is already logged in to convert transient account)
+		if (!_currentUserService.TryGetCurrentUser(out _))
+		{
+			bool registrationEnabled = await _systemSettingsService.IsUserRegistrationEnabledAsync();
+			if (!registrationEnabled)
+			{
+				return View("RegistrationDisabled");
+			}
+		}
+
+		if (!string.Equals(model.Password, model.PasswordConfirm))
+		{
+			ModelState.AddModelError(nameof(model.PasswordConfirm), "Passwords do not match");
+		}
+
+		if (!ModelState.IsValid)
+		{
+			return View(model);
+		}
+
+		try
+		{
+			if (_currentUserService.TryGetCurrentUser(out GetUserViewModel? user))
+			{
+				await _mediator.Send(
+					new UpdateUserCommand {Username = model.Username, Password = model.Password, Id = user!.Id},
+					cancellationToken);
+			}
+			else
+			{
+				var userId =
 					await _mediator.Send(
-						new UpdateUserCommand {Username = model.Username, Password = model.Password, Id = user!.Id},
+						new CreateUserCommand {Username = model.Username, Password = model.Password},
 						cancellationToken);
-				}
-				else
-				{
-					var userId =
-						await _mediator.Send(
-							new CreateUserCommand {Username = model.Username, Password = model.Password},
-							cancellationToken);
 					user = await _mediator.Send(new GetUserQuery(userId), cancellationToken);
 					await HttpContext.SignInUserAsync(user);
 				}
 			}
 			catch (UsernameNotUniqueException)
 			{
-				ModelState.AddModelError(nameof(model.Username), "Username already exists");
+				// Generic error message to prevent username enumeration
+				ModelState.AddModelError(string.Empty, "Registration failed. Please try again with a different username or password.");
 				return View(model);
 			}
 

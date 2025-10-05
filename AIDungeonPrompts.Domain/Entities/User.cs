@@ -10,5 +10,7 @@ namespace AIDungeonPrompts.Domain.Entities
 		public List<Prompt> Prompts { get; set; } = new List<Prompt>();
 		public RoleEnum Role { get; set; }
 		public string Username { get; set; } = string.Empty;
+		public List<LoginAttempt> LoginAttempts { get; set; } = new List<LoginAttempt>();
+		public List<AccountLockout> AccountLockouts { get; set; } = new List<AccountLockout>();
 	}
 }

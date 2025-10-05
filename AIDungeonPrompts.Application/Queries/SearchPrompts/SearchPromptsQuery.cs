@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AIDungeonPrompts.Application.Abstractions.DbContexts;
+using AIDungeonPrompts.Application.Abstractions.Infrastructure;
 using AIDungeonPrompts.Application.Helpers;
 using AIDungeonPrompts.Domain.Entities;
 using MediatR;
@@ -59,18 +60,26 @@ namespace AIDungeonPrompts.Application.Queries.SearchPrompts
 		public int? UserId { get; set; }
 	}
 
-	public class SearchPromptsQueryHandler : IRequestHandler<SearchPromptsQuery, SearchPromptsViewModel>
+public class SearchPromptsQueryHandler : IRequestHandler<SearchPromptsQuery, SearchPromptsViewModel>
+{
+	private readonly IAIDungeonPromptsDbContext _dbContext;
+	private readonly ISystemSettingsService _systemSettingsService;
+
+	public SearchPromptsQueryHandler(IAIDungeonPromptsDbContext dbContext, ISystemSettingsService systemSettingsService)
 	{
-		private readonly IAIDungeonPromptsDbContext _dbContext;
+		_dbContext = dbContext;
+		_systemSettingsService = systemSettingsService;
+	}
 
-		public SearchPromptsQueryHandler(IAIDungeonPromptsDbContext dbContext)
+	public async Task<SearchPromptsViewModel> Handle(SearchPromptsQuery request,
+		CancellationToken cancellationToken = default)
+	{
+		// Enforce maximum page size limit
+		var maxPageSize = await _systemSettingsService.GetMaxPageSizeAsync();
+		if (request.PageSize > maxPageSize)
 		{
-			_dbContext = dbContext;
+			request.PageSize = maxPageSize;
 		}
-
-		public async Task<SearchPromptsViewModel> Handle(SearchPromptsQuery request,
-			CancellationToken cancellationToken = default)
-		{
 			IQueryable<Prompt>? query = _dbContext.Prompts
 				.Include(prompt => prompt.PromptTags)
 				.ThenInclude(prompt => prompt.Tag)

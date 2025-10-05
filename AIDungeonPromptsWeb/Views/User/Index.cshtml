@@ -7,7 +7,10 @@
 <div class="d-flex">
 	<h2>My Profile</h2>
 	<div class="ml-auto">
-		<a id="log-out-button" data-transient="@Model.IsTransient" class="btn btn-outline-danger" asp-action="logout">Log Out</a>
+		<form method="post" asp-action="logout" style="display: inline;">
+			@Html.AntiForgeryToken()
+			<button id="log-out-button" data-transient="@Model.IsTransient" type="submit" class="btn btn-outline-danger">Log Out</button>
+		</form>
 	</div>
 </div>
 <br/>
@@ -172,10 +175,13 @@
 					Are you sure you want to continue?
 				</p>
 			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Return</button>
-				<a class="btn btn-danger" asp-action="logout">Log Out</a>
-			</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-secondary" data-dismiss="modal">Return</button>
+			<form method="post" asp-action="logout" style="display: inline;">
+				@Html.AntiForgeryToken()
+				<button type="submit" class="btn btn-danger">Log Out</button>
+			</form>
+		</div>
 		</div>
 	</div>
 </div>

@@ -6,7 +6,12 @@ namespace AIDungeonPrompts.Infrastructure
 {
 	public static class InfrastructureInjectionExtensions
 	{
-		public static IServiceCollection AddInfrastructureLayer(this IServiceCollection services) =>
+		public static IServiceCollection AddInfrastructureLayer(this IServiceCollection services)
+		{
 			services.AddScoped<ICurrentUserService, CurrentUserService>();
+		services.AddScoped<IAccountLockoutService, AccountLockoutService>();
+		services.AddScoped<ISystemSettingsService, SystemSettings.SystemSettingsService>();
+		return services;
+		}
 	}
 }

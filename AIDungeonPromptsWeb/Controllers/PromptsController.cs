@@ -88,72 +88,102 @@ namespace AIDungeonPrompts.Web.Controllers
 				return RedirectToAction("Create");
 			}
 
-			if (scenarioFile != null)
+		if (scenarioFile != null)
+		{
+			// Validate file type and content
+			if (!FileValidationHelper.IsValidJsonFile(scenarioFile))
 			{
-				var novelAiScenarioString = await ReadFormFile(scenarioFile);
-				try
-				{
-					NovelAiScenario? novelAiScenario =
-						JsonSerializer.Deserialize<NovelAiScenario>(novelAiScenarioString);
-					if (novelAiScenario != null)
-					{
-						model.Command.Description = novelAiScenario.Description;
-						model.Command.Memory = novelAiScenario.Context.FirstOrDefault()?.Text;
-						model.Command.AuthorsNote = novelAiScenario.Context.ElementAtOrDefault(1)?.Text;
-						model.Command.Title = novelAiScenario.Title;
-						model.Command.PromptContent = novelAiScenario.Prompt;
-						model.Command.PromptTags = string.Join(", ", novelAiScenario.Tags);
-						model.Command.WorldInfos = novelAiScenario.Lorebook.LorebookEntries.Count > 0
-							? novelAiScenario.Lorebook.LorebookEntries.Select(lore =>
-									new CreatePromptCommandWorldInfo
-									{
-										Keys = string.Join(", ", lore.Keys), Entry = lore.Text
-									})
-								.ToList()
-							: new List<CreatePromptCommandWorldInfo> {new()};
-						model.Command.NovelAiScenario = novelAiScenarioString;
-					}
-				}
-				catch (JsonException e)
-				{
-					_logger.LogError(e, "Could not decode NAI Json data");
-				}
-
-				ModelState.Clear();
+				ModelState.AddModelError(string.Empty, "Invalid file type. Please upload a valid JSON scenario file.");
 				return View(model);
 			}
 
-			if (holoFile != null)
+			var novelAiScenarioString = await ReadFormFile(scenarioFile);
+			try
 			{
-				var holoScenarioString = await ReadFormFile(holoFile);
-				try
+				NovelAiScenario? novelAiScenario =
+					JsonSerializer.Deserialize<NovelAiScenario>(novelAiScenarioString);
+				if (novelAiScenario != null)
 				{
-					HoloAiScenario? holoScenario =
-						JsonSerializer.Deserialize<HoloAiScenario>(holoScenarioString, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-					if (holoScenario != null)
-					{
-						model.Command.Description = null;
-						model.Command.Memory = holoScenario.Memory;
-						model.Command.AuthorsNote = holoScenario.AuthorsNote;
-						model.Command.Title = holoScenario.Title;
-						model.Command.PromptContent = string.Join('\n',
-							holoScenario.Content.Select(content =>
-								string.Join(' ', content.Children.Select(child => child.Text))));
-						model.Command.PromptTags = string.Join(", ", holoScenario.Tags);
-						model.Command.WorldInfos = holoScenario.WorldInfo.ConvertAll(e => new CreatePromptCommandWorldInfo
-						{
-							Entry = e.Value, Keys = string.Join(", ", e.Keys)
-						});
-						model.Command.HoloAiScenario = holoScenarioString;
-					}
-				}
-				catch (JsonException e)
-				{
-					_logger.LogError(e, "Could not decode Holo Json data");
-				}
-
-				ModelState.Clear();
+					model.Command.Description = novelAiScenario.Description;
+					model.Command.Memory = novelAiScenario.Context.FirstOrDefault()?.Text;
+					model.Command.AuthorsNote = novelAiScenario.Context.ElementAtOrDefault(1)?.Text;
+					model.Command.Title = novelAiScenario.Title;
+					model.Command.PromptContent = novelAiScenario.Prompt;
+					model.Command.PromptTags = string.Join(", ", novelAiScenario.Tags);
+					model.Command.WorldInfos = novelAiScenario.Lorebook.LorebookEntries.Count > 0
+						? novelAiScenario.Lorebook.LorebookEntries.Select(lore =>
+								new CreatePromptCommandWorldInfo
+								{
+									Keys = string.Join(", ", lore.Keys), Entry = lore.Text
+								})
+							.ToList()
+				: new List<CreatePromptCommandWorldInfo> {new()};
+				model.Command.NovelAiScenario = novelAiScenarioString;
+			}
+			else
+			{
+				_logger.LogWarning("NovelAI scenario deserialized to null");
+				ModelState.AddModelError(string.Empty, "Invalid NovelAI scenario file format. The file does not contain valid scenario data.");
 				return View(model);
+			}
+		}
+		catch (JsonException e)
+		{
+			_logger.LogError(e, "Could not decode NAI Json data");
+			ModelState.AddModelError(string.Empty, "Could not parse NovelAI scenario file. Please ensure the file is a valid NovelAI scenario export.");
+			return View(model);
+		}
+
+		ModelState.Clear();
+		return View(model);
+		}
+
+		if (holoFile != null)
+		{
+			// Validate file type and content
+			if (!FileValidationHelper.IsValidJsonFile(holoFile))
+			{
+				ModelState.AddModelError(string.Empty, "Invalid file type. Please upload a valid JSON scenario file.");
+				return View(model);
+			}
+
+			var holoScenarioString = await ReadFormFile(holoFile);
+			try
+			{
+			HoloAiScenario? holoScenario =
+				JsonSerializer.Deserialize<HoloAiScenario>(holoScenarioString, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+			if (holoScenario != null)
+			{
+				model.Command.Description = null;
+				model.Command.Memory = holoScenario.Memory;
+					model.Command.AuthorsNote = holoScenario.AuthorsNote;
+					model.Command.Title = holoScenario.Title;
+					model.Command.PromptContent = string.Join('\n',
+						holoScenario.Content.Select(content =>
+							string.Join(' ', content.Children.Select(child => child.Text))));
+					model.Command.PromptTags = string.Join(", ", holoScenario.Tags);
+					model.Command.WorldInfos = holoScenario.WorldInfo.ConvertAll(e => new CreatePromptCommandWorldInfo
+					{
+						Entry = e.Value, Keys = string.Join(", ", e.Keys)
+					});
+					model.Command.HoloAiScenario = holoScenarioString;
+				}
+			else
+			{
+				_logger.LogWarning("HoloAI scenario deserialized to null");
+				ModelState.AddModelError(string.Empty, "Invalid HoloAI scenario file format. The file does not contain valid scenario data.");
+				return View(model);
+			}
+			}
+			catch (JsonException e)
+			{
+				_logger.LogError(e, "Could not decode Holo Json data");
+				ModelState.AddModelError(string.Empty, "Could not parse HoloAI scenario file. Please ensure the file is a valid HoloAI scenario export.");
+				return View(model);
+			}
+
+			ModelState.Clear();
+			return View(model);
 			}
 
 			if (uploadWi)
@@ -273,12 +303,14 @@ namespace AIDungeonPrompts.Web.Controllers
 				return NotFound();
 			}
 
-			GetPromptViewModel? prompt = await _mediator.Send(new GetPromptQuery(id.Value), cancellationToken);
+		GetPromptViewModel? prompt = await _mediator.Send(new GetPromptQuery(id.Value), cancellationToken);
 
-			if (prompt == null || (prompt.OwnerId != user!.Id && (user.Role & RoleEnum.Delete) == 0))
-			{
-				return NotFound();
-			}
+		// Authorization check: User can delete if they own the prompt OR have Delete role permission
+		// This uses bitwise AND to check if Delete role flag is set (RoleEnum is a Flags enum)
+		if (prompt == null || (prompt.OwnerId != user!.Id && (user.Role & RoleEnum.Delete) == 0))
+		{
+			return NotFound();
+		}
 
 			await _mediator.Send(new DeletePromptCommand(prompt.Id), cancellationToken);
 

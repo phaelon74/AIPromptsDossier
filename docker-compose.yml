@@ -1,27 +1,58 @@
-version: '3'
+version: '3.8'
 
 services:
   db:
-    image: postgres:14
+    image: postgres:14-alpine
+    container_name: aidungeonprompts_db
     restart: always
-    #volumes:
-      #- db:/var/lib/postgresql
+    volumes:
+      - /media/main/AIPromptDossier/db:/var/lib/postgresql/data
     environment:
-      - POSTGRES_PASSWORD=example
+      - POSTGRES_DB=aidungeonprompts
+      - POSTGRES_USER=aidungeonprompts_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+    secrets:
+      - db_password
+    networks:
+      - db_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aidungeonprompts_user -d aidungeonprompts"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
-    image: app
+    image: aidungeonprompts_app
+    container_name: aidungeonprompts_app
     build:
-      context: app
-      dockerfile: .
+      context: .
+      dockerfile: Dockerfile
     restart: always
-    environment:
-      - ConnectionStrings__AIDungeonPrompt=Host=db;Port=5432;Database=prompts;Username=postgres;Password=example;
-      - Serilog__WriteTo__1__Args__connectionString=Host=db;Port=5432;Database=prompts;Username=postgres;Password=example;
-    depends_on:
-      - db
     ports:
-      - 5001:80
+      - "5001:80"
+    user: "5678:5678"  # Run as appuser (UID:GID 5678)
+    volumes:
+      - /media/main/AIPromptDossier/backups:/AIPromptDossier/backups
+    environment:
+      - ConnectionStrings__AIDungeonPrompt=Host=db;Port=5432;Database=aidungeonprompts;Username=aidungeonprompts_user
+      - Serilog__WriteTo__1__Args__connectionString=Host=db;Port=5432;Database=aidungeonprompts;Username=aidungeonprompts_user
+      - ASPNETCORE_ENVIRONMENT=Production
+    secrets:
+      - db_password
+      - serilog_db_password
+    networks:
+      - db_network
+    depends_on:
+      db:
+        condition: service_healthy
 
-#volumes:
-  #db:
+networks:
+  db_network:
+    driver: bridge
+    name: aidungeonprompts_network
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  serilog_db_password:
+    file: ./secrets/serilog_db_password.txt

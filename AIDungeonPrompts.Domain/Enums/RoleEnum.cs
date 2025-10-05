@@ -16,6 +16,9 @@ namespace AIDungeonPrompts.Domain.Enums
 		FieldEdit = 2,
 
 		[Display(Name = "Delete")]
-		Delete = 4
+		Delete = 4,
+
+		[Display(Name = "Admin")]
+		Admin = 8
 	}
 }

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -21,6 +22,13 @@ namespace AIDungeonPrompts.Application.Helpers
 			{
 				using var memoryStream = new MemoryStream(bytes);
 				using var zip = new ZipArchive(memoryStream);
+				
+				// Validate all entries for path traversal before checking contents
+				if (!ValidateZipEntries(zip))
+				{
+					return false;
+				}
+				
 				return zip.Entries.Any(e => ExpectedFiles.Contains(e.Name));
 			}
 			catch
@@ -40,6 +48,83 @@ namespace AIDungeonPrompts.Application.Helpers
 			}
 
 			return false;
+		}
+
+		/// <summary>
+		/// Validates all zip entries to prevent path traversal attacks
+		/// </summary>
+		private static bool ValidateZipEntries(ZipArchive archive)
+		{
+			foreach (var entry in archive.Entries)
+			{
+				if (!IsValidZipEntry(entry))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// Validates a single zip entry for security issues
+		/// Prevents path traversal attacks by checking for:
+		/// - Absolute paths
+		/// - Parent directory references (..)
+		/// - Null bytes
+		/// </summary>
+		private static bool IsValidZipEntry(ZipArchiveEntry entry)
+		{
+			// Check for null or empty names
+			if (string.IsNullOrWhiteSpace(entry.FullName))
+			{
+				return false;
+			}
+
+			// Check for null bytes (can be used to bypass checks)
+			if (entry.FullName.Contains('\0'))
+			{
+				return false;
+			}
+
+			// Normalize the path
+			var normalizedPath = entry.FullName.Replace('\\', '/');
+
+			// Check for absolute paths (starting with / or drive letter)
+			if (Path.IsPathRooted(normalizedPath) || normalizedPath.StartsWith("/"))
+			{
+				return false;
+			}
+
+			// Check for parent directory references
+			if (normalizedPath.Contains("../") || normalizedPath.Contains("..\\"))
+			{
+				return false;
+			}
+
+			// Check if the path tries to escape by starting with ..
+			if (normalizedPath.StartsWith(".."))
+			{
+				return false;
+			}
+
+			// Additional check: ensure the full path doesn't contain problematic sequences
+			var pathParts = normalizedPath.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+			foreach (var part in pathParts)
+			{
+				if (part == "..")
+				{
+					return false;
+				}
+			}
+
+			// Verify the file name matches expected files or is in a safe subdirectory
+			// Only allow expected .js files and no deeply nested structures
+			if (pathParts.Length > 2) // Max depth: one subdirectory
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		private static bool HeaderBytesMatch(byte[] headerBytes, byte[] dataBytes)

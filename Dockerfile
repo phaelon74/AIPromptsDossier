@@ -21,6 +21,20 @@ RUN dotnet publish "AIDungeonPrompts.Web.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
+
+# Create non-root user for security
+RUN groupadd -r appuser -g 5678 && \
+    useradd -r -g appuser -u 5678 -d /app -s /sbin/nologin -c "Application user" appuser
+
+# Copy published application
 COPY --from=publish /app/publish .
+
+# Create and set permissions for directories the app needs to write to
+RUN mkdir -p /AIPromptDossier/backups && \
+    chown -R appuser:appuser /app /AIPromptDossier
+
+# Switch to non-root user
+USER appuser
+
 EXPOSE 80
 ENTRYPOINT ["dotnet", "AIDungeonPrompts.Web.dll"]

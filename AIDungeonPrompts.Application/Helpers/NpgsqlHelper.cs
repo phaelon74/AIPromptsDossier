@@ -7,22 +7,23 @@ namespace AIDungeonPrompts.Application.Helpers
 	{
 		public static readonly string EscapeChar = @"\";
 
-		public static string SafeIlike(string query)
+	public static string SafeIlike(string query)
+	{
+		// Must escape backslash first to prevent double-escaping
+		var chars = new[] {'\\', '%', '_', '/'};
+		var stringBuilder = new StringBuilder(query);
+		for (var i = 0; i < stringBuilder.Length; i++)
 		{
-			var chars = new[] {'%', '_', '/'};
-			var stringBuilder = new StringBuilder(query);
-			for (var i = 0; i < stringBuilder.Length; i++)
+			if (!chars.Contains(stringBuilder[i]))
 			{
-				if (!chars.Contains(stringBuilder[i]))
-				{
-					continue;
-				}
-
-				stringBuilder.Insert(i, EscapeChar);
-				i++;
+				continue;
 			}
 
-			return stringBuilder.ToString();
+			stringBuilder.Insert(i, EscapeChar);
+			i++;
 		}
+
+		return stringBuilder.ToString();
+	}
 	}
 }

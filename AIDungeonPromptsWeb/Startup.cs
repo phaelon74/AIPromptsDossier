@@ -38,7 +38,7 @@ namespace AIDungeonPrompts.Web
 {
 	public class Startup
 	{
-		private const string DatabaseConnectionName = "AIDungeonPrompt";
+		private const string DatabaseConnectionName = ConfigurationConstants.DatabaseConnectionName;
 
 		public Startup(IConfiguration configuration, IWebHostEnvironment environment)
 		{
@@ -54,22 +54,37 @@ namespace AIDungeonPrompts.Web
 		{
 			app.UseForwardedHeaders();
 
-			if (env.IsDevelopment())
-			{
-				app.UseDeveloperExceptionPage();
-			}
-			else
-			{
-				app.UseExceptionHandler("/Home/Error");
-			}
+		if (env.IsDevelopment())
+		{
+			app.UseDeveloperExceptionPage();
+		}
+		else
+		{
+			// Use generic error page in production - does not expose stack traces or sensitive information
+			app.UseExceptionHandler("/Home/Error");
+			
+			// Ensure status code pages don't leak information
+			app.UseStatusCodePagesWithReExecute("/Home/Error/{0}");
+		}
 
-			// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-			app.UseHsts();
-			app.UseXContentTypeOptions();
-			app.UseXfo(options => options.Deny());
-			app.UseHttpsRedirection();
-			app.UseXXssProtection(options => options.EnabledWithBlockMode());
-			app.UseReferrerPolicy(opts => opts.NoReferrer());
+		// Enhanced HSTS with includeSubDomains and preload
+		app.UseHsts(options => options
+			.MaxAge(days: 365)
+			.IncludeSubdomains()
+			.Preload());
+		app.UseXContentTypeOptions();
+		app.UseXfo(options => options.Deny());
+		app.UseHttpsRedirection();
+		app.UseXXssProtection(options => options.EnabledWithBlockMode());
+		app.UseReferrerPolicy(opts => opts.NoReferrer());
+		
+		// Additional security headers
+		app.Use(async (context, next) =>
+		{
+			context.Response.Headers.Add("X-Download-Options", "noopen");
+			context.Response.Headers.Add("X-Permitted-Cross-Domain-Policies", "none");
+			await next();
+		});
 
 			app.UseStatusCodePages();
 
@@ -144,21 +159,21 @@ namespace AIDungeonPrompts.Web
 			services.AddDataProtection()
 				.PersistKeysToDbContext<AIDungeonPromptsDbContext>();
 
-			services
-				.AddApplicationLayer()
-				.AddPersistenceLayer(Configuration.GetConnectionString(DatabaseConnectionName))
-				.AddBackupPersistenceLayer(BackupDatabaseConnectionName())
-				.AddInfrastructureLayer()
-				.AddHttpContextAccessor()
-				.AddDefaultCorrelationId()
-				.AddDistributedMemoryCache()
-				.AddMediatR(new[] {typeof(DomainLayer), typeof(ApplicationLayer)}.Select(t => t.Assembly).ToArray())
-				.AddFluentValidation(new[] {typeof(ApplicationLayer)}.Select(t => t.Assembly).ToArray())
-				.AddRouting(builder =>
-				{
-					builder.LowercaseUrls = true;
-					builder.LowercaseQueryStrings = true;
-				})
+		services
+			.AddApplicationLayer()
+			.AddPersistenceLayer(GetDatabaseConnectionString())
+			.AddBackupPersistenceLayer(BackupDatabaseConnectionName())
+			.AddInfrastructureLayer()
+			.AddHttpContextAccessor()
+			.AddDefaultCorrelationId()
+			.AddDistributedMemoryCache()
+			.AddMediatR(new[] {typeof(DomainLayer), typeof(ApplicationLayer)}.Select(t => t.Assembly).ToArray())
+			.AddFluentValidation(new[] {typeof(ApplicationLayer)}.Select(t => t.Assembly).ToArray())
+			.AddRouting(builder =>
+			{
+				builder.LowercaseUrls = true;
+				builder.LowercaseQueryStrings = true;
+			})
 				.AddControllersWithViews(builder =>
 				{
 					builder.Filters.Add(typeof(CspAttribute));
@@ -180,13 +195,29 @@ namespace AIDungeonPrompts.Web
 						.Select(t => t.Assembly).ToArray());
 				});
 
-			services.AddAuthorization(options =>
-			{
-				options.AddPolicy(
-					PolicyValueConstants.EditorsOnly,
-					policy => policy.RequireClaim(ClaimValueConstants.CanEdit, true.ToString())
-				);
-			});
+		services.AddAuthorization(options =>
+		{
+			options.AddPolicy(
+				PolicyValueConstants.EditorsOnly,
+				policy => policy.RequireClaim(ClaimValueConstants.CanEdit, true.ToString())
+			);
+			options.AddPolicy(
+				PolicyValueConstants.AdminsOnly,
+				policy => policy.RequireClaim(ClaimValueConstants.IsAdmin, true.ToString())
+			);
+		});
+
+		// Configure request size limits
+		services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
+		{
+			options.Limits.MaxRequestBodySize = ConfigurationConstants.MaxRequestBodySizeBytes;
+		});
+
+		services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+		{
+			options.MultipartBodyLengthLimit = ConfigurationConstants.MaxFileUploadSizeBytes;
+			options.ValueLengthLimit = ConfigurationConstants.MaxFileUploadSizeBytes;
+		});
 
 			services.AddHostedService<DatabaseMigrationHostedService>();
 			services.AddHostedService<DatabaseBackupHostedService>();
@@ -195,7 +226,43 @@ namespace AIDungeonPrompts.Web
 			services.AddHostedService<ReportCleanerCronJob>();
 		}
 
-		private string BackupDatabaseConnectionName() =>
-			$"Data Source={Path.Combine(Environment.WebRootPath, "backup.db")};";
+	private string BackupDatabaseConnectionName() =>
+		$"Data Source=/AIPromptDossier/backups/backup.db;";
+
+	private string GetDatabaseConnectionString()
+	{
+		var connectionString = Configuration.GetConnectionString(DatabaseConnectionName);
+		
+		// Validate that connection string is configured
+		if (string.IsNullOrWhiteSpace(connectionString))
+		{
+			throw new InvalidOperationException(
+				$"Database connection string '{DatabaseConnectionName}' is not configured. " +
+				"Please ensure appsettings.json or environment variables are properly configured.");
+		}
+		
+		// Read password from Docker Secret if available
+		if (File.Exists(ConfigurationConstants.DatabasePasswordSecretPath))
+		{
+			var password = File.ReadAllText(ConfigurationConstants.DatabasePasswordSecretPath).Trim();
+			connectionString += $"Password={password};";
+		}
+		
+		return connectionString;
 	}
+
+	private string GetSerilogConnectionString()
+	{
+		var connectionString = Configuration.GetConnectionString(DatabaseConnectionName);
+		
+		// Read password from Docker Secret if available
+		if (File.Exists(ConfigurationConstants.SerilogPasswordSecretPath))
+		{
+			var password = File.ReadAllText(ConfigurationConstants.SerilogPasswordSecretPath).Trim();
+			connectionString += $"Password={password};";
+		}
+		
+		return connectionString;
+	}
+}
 }

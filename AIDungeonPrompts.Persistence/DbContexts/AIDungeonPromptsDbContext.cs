@@ -30,7 +30,10 @@ namespace AIDungeonPrompts.Persistence.DbContexts
 		public DbSet<Tag> Tags { get; set; }
 		public DbSet<User> Users { get; set; }
 		public DbSet<WorldInfo> WorldInfos { get; set; }
-		public DbSet<ServerFlag> ServerFlags { get; set; }
+	public DbSet<ServerFlag> ServerFlags { get; set; }
+	public DbSet<LoginAttempt> LoginAttempts { get; set; }
+	public DbSet<AccountLockout> AccountLockouts { get; set; }
+	public DbSet<SystemSetting> SystemSettings { get; set; }
 
 		public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
 		{
