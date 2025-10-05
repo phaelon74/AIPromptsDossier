@@ -10,9 +10,7 @@ services:
     environment:
       - POSTGRES_DB=aidungeonprompts
       - POSTGRES_USER=aidungeonprompts_user
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
-    secrets:
-      - db_password
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     networks:
       - db_network
     healthcheck:
@@ -36,9 +34,7 @@ services:
       - ConnectionStrings__AIDungeonPrompt=Host=db;Port=5432;Database=aidungeonprompts;Username=aidungeonprompts_user
       - Serilog__WriteTo__1__Args__connectionString=Host=db;Port=5432;Database=aidungeonprompts;Username=aidungeonprompts_user
       - ASPNETCORE_ENVIRONMENT=Production
-    secrets:
-      - db_password
-      - serilog_db_password
+      - DB_PASSWORD=${DB_PASSWORD}
     networks:
       - db_network
     depends_on:
@@ -49,9 +45,3 @@ networks:
   db_network:
     driver: bridge
     name: aidungeonprompts_network
-
-secrets:
-  db_password:
-    file: ./secrets/db_password.txt
-  serilog_db_password:
-    file: ./secrets/serilog_db_password.txt

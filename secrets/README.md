@@ -1,32 +1,48 @@
-# Docker Secrets
+# Docker Configuration
 
-This directory contains sensitive credentials used by the Docker containers.
+**NOTE:** This project now uses environment variables for database passwords instead of Docker secrets files.
 
-## Files
+## Configuration Method
 
-- `db_password.txt` - Database password for the application connection
-- `serilog_db_password.txt` - Database password for Serilog logging connection
+Passwords are configured directly in `docker-compose.yml` as environment variables:
 
-## Setup
+```yaml
+environment:
+  - POSTGRES_PASSWORD=your_secure_database_password_here  # For db service
+  - DB_PASSWORD=your_secure_database_password_here        # For app service
+```
 
-1. **Replace the placeholder passwords** in both files with secure passwords
-2. Both passwords should typically be the same (the PostgreSQL user password)
-3. **Never commit these files to version control** (they're in .gitignore)
+## Setup Instructions
 
-## Security Notes
+1. **Edit `docker-compose.yml`** and replace `your_secure_database_password_here` with your actual database password in **both** places:
+   - Line ~13: `POSTGRES_PASSWORD` for the database container
+   - Line ~37: `DB_PASSWORD` for the application container
 
-- These files are mounted as Docker secrets at runtime
-- The container runs as a non-root user for security
-- Keep these files readable only by your user: `chmod 600 secrets/*.txt`
-- Use strong, unique passwords for production deployments
+2. **Use the same password** for both variables
 
-## Example
+3. **Never commit passwords to version control** - add `docker-compose.yml` to `.gitignore` or use environment variable substitution
+
+## Better Security (Optional)
+
+For production, use a `.env` file instead:
+
+1. Create a `.env` file in the project root:
+```bash
+DB_PASSWORD=your_secure_database_password_here
+```
+
+2. Update `docker-compose.yml` to use the variable:
+```yaml
+environment:
+  - POSTGRES_PASSWORD=${DB_PASSWORD}
+  - DB_PASSWORD=${DB_PASSWORD}
+```
+
+3. Add `.env` to `.gitignore`
+
+## Generate Secure Password
 
 ```bash
-# Generate a strong password
-openssl rand -base64 32 > secrets/db_password.txt
-cp secrets/db_password.txt secrets/serilog_db_password.txt
-
-# Set proper permissions
-chmod 600 secrets/*.txt
+# Generate a strong random password
+openssl rand -base64 32
 ```
