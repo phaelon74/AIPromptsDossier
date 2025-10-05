@@ -244,8 +244,23 @@ namespace AIDungeonPrompts.Web
 		// Read password from Docker Secret if available
 		if (File.Exists(ConfigurationConstants.DatabasePasswordSecretPath))
 		{
-			var password = File.ReadAllText(ConfigurationConstants.DatabasePasswordSecretPath).Trim();
-			connectionString += $"Password={password};";
+			try
+			{
+				var password = File.ReadAllText(ConfigurationConstants.DatabasePasswordSecretPath).Trim();
+				connectionString += $"Password={password};";
+			}
+			catch (UnauthorizedAccessException ex)
+			{
+				throw new InvalidOperationException(
+					$"Unable to read database password from '{ConfigurationConstants.DatabasePasswordSecretPath}'. " +
+					"Ensure the Docker secrets file exists and has proper permissions for the application user.", ex);
+			}
+			catch (IOException ex)
+			{
+				throw new InvalidOperationException(
+					$"Unable to read database password from '{ConfigurationConstants.DatabasePasswordSecretPath}'. " +
+					"IO error occurred while reading the secrets file.", ex);
+			}
 		}
 		
 		return connectionString;
@@ -258,8 +273,23 @@ namespace AIDungeonPrompts.Web
 		// Read password from Docker Secret if available
 		if (File.Exists(ConfigurationConstants.SerilogPasswordSecretPath))
 		{
-			var password = File.ReadAllText(ConfigurationConstants.SerilogPasswordSecretPath).Trim();
-			connectionString += $"Password={password};";
+			try
+			{
+				var password = File.ReadAllText(ConfigurationConstants.SerilogPasswordSecretPath).Trim();
+				connectionString += $"Password={password};";
+			}
+			catch (UnauthorizedAccessException ex)
+			{
+				throw new InvalidOperationException(
+					$"Unable to read Serilog database password from '{ConfigurationConstants.SerilogPasswordSecretPath}'. " +
+					"Ensure the Docker secrets file exists and has proper permissions for the application user.", ex);
+			}
+			catch (IOException ex)
+			{
+				throw new InvalidOperationException(
+					$"Unable to read Serilog database password from '{ConfigurationConstants.SerilogPasswordSecretPath}'. " +
+					"IO error occurred while reading the secrets file.", ex);
+			}
 		}
 		
 		return connectionString;

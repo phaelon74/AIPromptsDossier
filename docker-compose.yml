@@ -30,7 +30,6 @@ services:
     restart: always
     ports:
       - "5001:80"
-    user: "5678:5678"  # Run as appuser (UID:GID 5678)
     volumes:
       - /media/main/AIPromptDossier/backups:/AIPromptDossier/backups
     environment:
