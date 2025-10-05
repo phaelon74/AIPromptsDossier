@@ -1,4 +1,5 @@
 using AIDungeonPrompts.Application.Abstractions.Identity;
+using AIDungeonPrompts.Application.Abstractions.Infrastructure;
 using AIDungeonPrompts.Infrastructure.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
