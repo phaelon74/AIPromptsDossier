@@ -4,7 +4,14 @@
 <h2>Register</h2>
 <br/>
 
-<form asp-action="Register" method="post">
+@if (TempData["ValidationErrors"] != null)
+{
+	<div class="alert alert-danger">
+		<strong>Validation Errors:</strong> @TempData["ValidationErrors"]
+	</div>
+}
+
+<form asp-action="Register" method="post" novalidate>
 	@Html.HiddenFor(m => m.ReturnUrl)
 	<input type="text" name="Honey" class="honey" tabindex="-1" autocomplete="off" aria-hidden="true" />
 	<div class="form-group required">

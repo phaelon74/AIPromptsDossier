@@ -188,6 +188,9 @@ namespace AIDungeonPrompts.Web.Controllers
 
 		if (!ModelState.IsValid)
 		{
+			// Log validation errors
+			var errors = string.Join("; ", ModelState.SelectMany(x => x.Value.Errors.Select(e => $"{x.Key}: {e.ErrorMessage}")));
+			TempData["ValidationErrors"] = errors;
 			return View(model);
 		}
 
