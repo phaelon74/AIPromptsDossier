@@ -148,12 +148,13 @@ namespace AIDungeonPrompts.Web
 					ForwardedHeaders.XForwardedHost;
 			});
 
-			services
-				.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-				.AddCookie(builder =>
-				{
-					builder.LoginPath = "/user/login";
-				});
+		services
+			.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+			.AddCookie(builder =>
+			{
+				builder.LoginPath = "/user/login";
+				builder.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Allow HTTP cookies
+			});
 
 			// See: https://docs.microsoft.com/en-us/aspnet/core/security/data-protection/implementation/key-storage-providers?view=aspnetcore-5.0&tabs=visual-studio#entity-framework-core
 			services.AddDataProtection()
