@@ -105,7 +105,7 @@ namespace AIDungeonPrompts.Web.Controllers
 		public IActionResult LogIn(string returnUrl) => View(new LogInModel {ReturnUrl = returnUrl});
 
 	[HttpPost]
-	[ValidateAntiForgeryToken]
+	//[ValidateAntiForgeryToken] // Temporarily disabled for debugging
 	public async Task<IActionResult> LogIn(LogInModel model, CancellationToken cancellationToken)
 	{
 		if (!ModelState.IsValid)
