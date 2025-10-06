@@ -88,10 +88,10 @@ namespace AIDungeonPrompts.Web
 
 			app.UseStatusCodePages();
 
-			app.UseCookiePolicy(new CookiePolicyOptions
-			{
-				HttpOnly = HttpOnlyPolicy.Always,
-				Secure = CookieSecurePolicy.Always,
+		app.UseCookiePolicy(new CookiePolicyOptions
+		{
+			HttpOnly = HttpOnlyPolicy.Always,
+			Secure = CookieSecurePolicy.SameAsRequest, // Allow HTTP in non-HTTPS environments
 				MinimumSameSitePolicy = SameSiteMode.Strict
 			});
 

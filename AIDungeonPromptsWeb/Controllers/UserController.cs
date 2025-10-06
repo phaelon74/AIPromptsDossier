@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AIDungeonPrompts.Application.Abstractions.Identity;
@@ -105,7 +104,7 @@ namespace AIDungeonPrompts.Web.Controllers
 		public IActionResult LogIn(string returnUrl) => View(new LogInModel {ReturnUrl = returnUrl});
 
 	[HttpPost]
-	//[ValidateAntiForgeryToken] // Temporarily disabled for debugging
+	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> LogIn(LogInModel model, CancellationToken cancellationToken)
 	{
 		if (!ModelState.IsValid)
@@ -169,7 +168,7 @@ namespace AIDungeonPrompts.Web.Controllers
 	}
 
 	[HttpPost]
-	//[ValidateAntiForgeryToken] // Temporarily disabled for debugging
+	[ValidateAntiForgeryToken]
 	public async Task<IActionResult> Register(RegisterUserModel model, CancellationToken cancellationToken)
 	{
 		// Check if registration is enabled (unless user is already logged in to convert transient account)
@@ -189,9 +188,6 @@ namespace AIDungeonPrompts.Web.Controllers
 
 		if (!ModelState.IsValid)
 		{
-			// Log validation errors
-			var errors = string.Join("; ", ModelState.SelectMany(x => x.Value.Errors.Select(e => $"{x.Key}: {e.ErrorMessage}")));
-			TempData["ValidationErrors"] = errors;
 			return View(model);
 		}
 
