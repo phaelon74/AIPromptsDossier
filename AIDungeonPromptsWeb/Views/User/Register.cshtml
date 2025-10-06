@@ -6,7 +6,7 @@
 
 <form asp-action="Register" method="post">
 	@Html.HiddenFor(m => m.ReturnUrl)
-	<input class="honey" name="Honey"/>
+	<input type="text" name="Honey" style="position:absolute;left:-9999px" tabindex="-1" autocomplete="off" />
 	<div class="form-group required">
 		@Html.LabelFor(m => m.Username)
 		<input asp-for="Username" class="form-control"/>
