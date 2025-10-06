@@ -51,12 +51,22 @@
 			<div class="d-flex flex-sm-row-reverse">
 				<button class="btn btn-lg btn-primary">Search</button>
 			</div>
+			<div class="d-flex flex-sm-row-reverse mt-2">
+				<div class="form-check">
+					<input class="form-check-input" type="checkbox" asp-for="ShowNsfw" id="showNsfwCheckbox"/>
+					<label class="form-check-label" for="showNsfwCheckbox">
+						NSFW
+					</label>
+				</div>
+			</div>
 			<div class="d-flex flex-sm-row-reverse mt-sm-auto mr-auto mr-sm-0">
 				<button asp-action="Random" class="btn btn-outline-secondary">Random</button>
 			</div>
 		</div>
 	</div>
 </form>
+
+<hr class="search-separator"/>
 
 <div class="row">
 	@Html.DisplayFor(m => m.SearchResult.Results)
@@ -70,6 +80,7 @@
 		{"Tags", Model.Tags ?? string.Empty},
 		{"NsfwSetting", ((int) Model.NsfwSetting).ToString()},
 		{"Reverse", Model.Reverse.ToString()},
+		{"ShowNsfw", Model.ShowNsfw.ToString()},
 		{"TagJoin", ((int) Model.TagJoin).ToString()},
 		{"MatchExact", Model.MatchExact.ToString()}
 	};
@@ -168,4 +179,19 @@
 
 @section Scripts {
     <partial name="_TagSuggestionPartial.cshtml"/>
+    <script>
+        $(document).ready(function() {
+            var nsfwDropdown = $('#NsfwSetting');
+            var nsfwCheckbox = $('#showNsfwCheckbox');
+            
+            // Auto-check NSFW checkbox when NSFW dropdown is selected
+            nsfwDropdown.on('change', function() {
+                var selectedValue = $(this).val();
+                // If NSFW only (value 2) is selected, automatically check the NSFW checkbox
+                if (selectedValue == '2' && !nsfwCheckbox.is(':checked')) {
+                    nsfwCheckbox.prop('checked', true);
+                }
+            });
+        });
+    </script>
 }

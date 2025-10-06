@@ -54,45 +54,50 @@ namespace AIDungeonPrompts.Web.Controllers
 		public IActionResult Error() =>
 			View(new ErrorViewModel {RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier});
 
-		public async Task<IActionResult> Index(SearchRequestParameters request, CancellationToken cancellationToken)
+	public async Task<IActionResult> Index(SearchRequestParameters request, CancellationToken cancellationToken)
+	{
+		var tags = new List<string>();
+		if (!string.IsNullOrWhiteSpace(request.Tags))
 		{
-			var tags = new List<string>();
-			if (!string.IsNullOrWhiteSpace(request.Tags))
-			{
-				tags = request.Tags.Split(',').Select(t => t.Trim()).ToList();
-			}
-
-			var nsfwIndex = tags.FindIndex(t => string.Equals("nsfw", t, StringComparison.OrdinalIgnoreCase));
-			if (nsfwIndex > -1)
-			{
-				request.NsfwSetting = SearchNsfw.NsfwOnly;
-				tags.RemoveAt(nsfwIndex);
-			}
-
-			SearchPromptsViewModel? result = await _mediator.Send(
-				new SearchPromptsQuery
-				{
-					Page = request.Page ?? 1,
-					Reverse = request.Reverse,
-					Search = request.Query ?? string.Empty,
-					Tags = tags,
-					Nsfw = request.NsfwSetting,
-					TagJoin = request.TagJoin,
-					TagsFuzzy = !request.MatchExact
-				}, cancellationToken);
-
-			return View(new SearchViewModel
-			{
-				Page = request.Page,
-				Query = request.Query,
-				Reverse = request.Reverse,
-				Tags = request.Tags,
-				NsfwSetting = request.NsfwSetting,
-				SearchResult = result,
-				MatchExact = request.MatchExact,
-				TagJoin = request.TagJoin
-			});
+			tags = request.Tags.Split(',').Select(t => t.Trim()).ToList();
 		}
+
+		var nsfwIndex = tags.FindIndex(t => string.Equals("nsfw", t, StringComparison.OrdinalIgnoreCase));
+		if (nsfwIndex > -1)
+		{
+			request.NsfwSetting = SearchNsfw.NsfwOnly;
+			request.ShowNsfw = true;
+			tags.RemoveAt(nsfwIndex);
+		}
+
+		// If ShowNsfw checkbox is unchecked, force SafeOnly regardless of dropdown
+		var effectiveNsfwSetting = request.ShowNsfw ? request.NsfwSetting : SearchNsfw.SafeOnly;
+
+		SearchPromptsViewModel? result = await _mediator.Send(
+			new SearchPromptsQuery
+			{
+				Page = request.Page ?? 1,
+				Reverse = request.Reverse,
+				Search = request.Query ?? string.Empty,
+				Tags = tags,
+				Nsfw = effectiveNsfwSetting,
+				TagJoin = request.TagJoin,
+				TagsFuzzy = !request.MatchExact
+			}, cancellationToken);
+
+		return View(new SearchViewModel
+		{
+			Page = request.Page,
+			Query = request.Query,
+			Reverse = request.Reverse,
+			Tags = request.Tags,
+			NsfwSetting = request.NsfwSetting,
+			ShowNsfw = request.ShowNsfw,
+			SearchResult = result,
+			MatchExact = request.MatchExact,
+			TagJoin = request.TagJoin
+		});
+	}
 
 		public async Task<IActionResult> Random()
 		{

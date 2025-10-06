@@ -15,6 +15,9 @@ namespace AIDungeonPrompts.Web.Models
 		[Display(Name = "Reverse Results")]
 		public bool Reverse { get; set; }
 
+		[Display(Name = "Show NSFW")]
+		public bool ShowNsfw { get; set; }
+
 		[Display(Name = "Inclusive/Exclusive Tags")]
 		public TagJoin TagJoin { get; set; }
 

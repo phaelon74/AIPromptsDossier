@@ -160,3 +160,11 @@ code.card-text {
 .spoiler:hover {
 	color:white;
 }
+
+.search-separator {
+	border: 0;
+	height: 3px;
+	background: linear-gradient(to right, #d4af37, #ffd700, #d4af37);
+	margin: 1.5rem 0;
+	box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+}
