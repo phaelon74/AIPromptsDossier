@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AIDungeonPrompts.Application.Abstractions.DbContexts;
 using AIDungeonPrompts.Application.Abstractions.Identity;
+using AIDungeonPrompts.Application.Abstractions.Infrastructure;
 using AIDungeonPrompts.Domain.Entities;
 using AIDungeonPrompts.Domain.Enums;
 using AIDungeonPrompts.Web.Constants;
@@ -18,11 +19,13 @@ namespace AIDungeonPrompts.Web.Controllers
 	{
 		private readonly IAIDungeonPromptsDbContext _dbContext;
 		private readonly IAccountLockoutService _lockoutService;
+		private readonly ISystemSettingsService _systemSettingsService;
 
-		public AdminController(IAIDungeonPromptsDbContext dbContext, IAccountLockoutService lockoutService)
+		public AdminController(IAIDungeonPromptsDbContext dbContext, IAccountLockoutService lockoutService, ISystemSettingsService systemSettingsService)
 		{
 			_dbContext = dbContext;
 			_lockoutService = lockoutService;
+			_systemSettingsService = systemSettingsService;
 		}
 
 		[HttpGet("[controller]")]
@@ -93,6 +96,42 @@ namespace AIDungeonPrompts.Web.Controllers
 
 			TempData["SuccessMessage"] = "Password reset successfully.";
 			return RedirectToAction("Users");
+		}
+
+		[HttpGet("[controller]/settings")]
+		public async Task<IActionResult> Settings()
+		{
+			var registrationEnabled = await _systemSettingsService.IsUserRegistrationEnabledAsync();
+			var maxPageSize = await _systemSettingsService.GetMaxPageSizeAsync();
+
+			ViewBag.RegistrationEnabled = registrationEnabled;
+			ViewBag.MaxPageSize = maxPageSize;
+
+			return View();
+		}
+
+		[HttpPost("[controller]/toggle-registration")]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> ToggleRegistration(bool enabled)
+		{
+			await _systemSettingsService.SetUserRegistrationEnabledAsync(enabled);
+			TempData["SuccessMessage"] = $"User registration has been {(enabled ? "enabled" : "disabled")}.";
+			return RedirectToAction("Settings");
+		}
+
+		[HttpPost("[controller]/update-page-size")]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> UpdatePageSize(int pageSize)
+		{
+			if (pageSize < 1 || pageSize > 1000)
+			{
+				TempData["ErrorMessage"] = "Page size must be between 1 and 1000.";
+				return RedirectToAction("Settings");
+			}
+
+			await _systemSettingsService.SetMaxPageSizeAsync(pageSize);
+			TempData["SuccessMessage"] = "Max page size updated successfully.";
+			return RedirectToAction("Settings");
 		}
 	}
 }

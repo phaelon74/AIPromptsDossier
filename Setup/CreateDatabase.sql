@@ -197,6 +197,18 @@ CREATE TABLE "DataProtectionKeys" (
 );
 
 -- ===================================================
+-- Table: SystemSettings
+-- ===================================================
+CREATE TABLE "SystemSettings" (
+    "Id" SERIAL PRIMARY KEY,
+    "Key" VARCHAR(255) NOT NULL UNIQUE,
+    "Value" TEXT NOT NULL,
+    "Description" TEXT,
+    "DateCreated" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "DateEdited" TIMESTAMP WITH TIME ZONE
+);
+
+-- ===================================================
 -- Table: LoginAttempts
 -- ===================================================
 CREATE TABLE "LoginAttempts" (
@@ -259,6 +271,12 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO aidungeonpro
 -- Insert default ServerFlag for create disabled
 INSERT INTO "ServerFlags" ("Name", "Enabled", "AdditionalMessage", "DateCreated")
 VALUES ('CreateDisabled', FALSE, NULL, NOW());
+
+-- Insert default SystemSettings
+INSERT INTO "SystemSettings" ("Key", "Value", "Description", "DateCreated")
+VALUES 
+    ('UserRegistrationEnabled', 'true', 'Controls whether new user registration is allowed', NOW()),
+    ('MaxPageSize', '100', 'Maximum number of results per page in search queries', NOW());
 
 -- ===================================================
 -- Database setup complete!

@@ -1,0 +1,67 @@
+@{
+    ViewData["Title"] = "System Settings";
+}
+
+<div class="container mt-4">
+    <h2>System Settings</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>User Registration</h5>
+        </div>
+        <div class="card-body">
+            <p>Current Status: <strong>@(ViewBag.RegistrationEnabled ? "Enabled" : "Disabled")</strong></p>
+            <p class="text-muted">
+                Control whether new users can register accounts. The first user to register automatically becomes an admin and registration is disabled. 
+                You can re-enable it here to allow more users.
+            </p>
+            <form method="post" asp-action="ToggleRegistration">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="enabled" value="@(!ViewBag.RegistrationEnabled)" />
+                <button type="submit" class="btn @(ViewBag.RegistrationEnabled ? "btn-warning" : "btn-primary")">
+                    @(ViewBag.RegistrationEnabled ? "Disable Registration" : "Enable Registration")
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Search Page Size</h5>
+        </div>
+        <div class="card-body">
+            <p>Current Max Page Size: <strong>@ViewBag.MaxPageSize</strong></p>
+            <p class="text-muted">Maximum number of results per page in search queries (1-1000).</p>
+            <form method="post" asp-action="UpdatePageSize" class="row g-3">
+                @Html.AntiForgeryToken()
+                <div class="col-auto">
+                    <input type="number" name="pageSize" class="form-control" min="1" max="1000" value="@ViewBag.MaxPageSize" required />
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="@Url.Action("Index", "Admin")" class="btn btn-secondary">Back to Admin</a>
+    </div>
+</div>
+
