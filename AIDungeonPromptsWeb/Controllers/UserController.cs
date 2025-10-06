@@ -169,7 +169,7 @@ namespace AIDungeonPrompts.Web.Controllers
 	}
 
 	[HttpPost]
-	[ValidateAntiForgeryToken]
+	//[ValidateAntiForgeryToken] // Temporarily disabled for debugging
 	public async Task<IActionResult> Register(RegisterUserModel model, CancellationToken cancellationToken)
 	{
 		// Check if registration is enabled (unless user is already logged in to convert transient account)
