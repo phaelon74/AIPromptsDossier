@@ -1,24 +1,27 @@
-using System.Threading;
 using System.Threading.Tasks;
 using AIDungeonPrompts.Application.Abstractions.Identity;
 using AIDungeonPrompts.Application.Queries.GetUser;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace AIDungeonPrompts.Infrastructure.Identity
 {
 	public class CurrentUserService : ICurrentUserService
 	{
+		private const string CurrentUserKey = "CurrentUser";
+		private readonly IHttpContextAccessor _httpContextAccessor;
 		private readonly ILogger<CurrentUserService> _logger;
 		private readonly IMediator _mediator;
-		
-		// Use AsyncLocal<T> for thread-safe storage in async scenarios
-		private readonly AsyncLocal<GetUserViewModel?> _currentUser = new();
 
-		public CurrentUserService(ILogger<CurrentUserService> logger, IMediator mediator)
+		public CurrentUserService(
+			ILogger<CurrentUserService> logger, 
+			IMediator mediator,
+			IHttpContextAccessor httpContextAccessor)
 		{
 			_logger = logger;
 			_mediator = mediator;
+			_httpContextAccessor = httpContextAccessor;
 		}
 
 		public async Task SetCurrentUser(int userId)
@@ -29,12 +32,19 @@ namespace AIDungeonPrompts.Infrastructure.Identity
 				_logger.LogWarning($"User with ID {userId} could not be found.");
 			}
 
-			_currentUser.Value = user;
+			if (_httpContextAccessor.HttpContext != null)
+			{
+				_httpContextAccessor.HttpContext.Items[CurrentUserKey] = user;
+			}
 		}
 
 		public bool TryGetCurrentUser(out GetUserViewModel? user)
 		{
-			user = _currentUser.Value;
+			user = null;
+			if (_httpContextAccessor.HttpContext?.Items.TryGetValue(CurrentUserKey, out var userObj) == true)
+			{
+				user = userObj as GetUserViewModel;
+			}
 			return user != null;
 		}
 	}
