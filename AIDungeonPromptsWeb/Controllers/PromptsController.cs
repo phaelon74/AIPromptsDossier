@@ -36,6 +36,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AIDungeonPrompts.Web.Controllers
 {
+	[Authorize] // Require authentication for all actions
 	public class PromptsController : Controller
 	{
 		private readonly ICurrentUserService _currentUserService;

@@ -11,11 +11,13 @@ using AIDungeonPrompts.Web.ColorScheme;
 using AIDungeonPrompts.Web.Constants;
 using AIDungeonPrompts.Web.Models;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AIDungeonPrompts.Web.Controllers
 {
+	[Authorize] // Require authentication for all actions
 	public class HomeController : Controller
 	{
 		private readonly IMediator _mediator;
@@ -25,9 +27,10 @@ namespace AIDungeonPrompts.Web.Controllers
 			_mediator = mediator;
 		}
 
-		[HttpPost("/color-scheme")]
-		[ValidateAntiForgeryToken]
-		public IActionResult ColorScheme(ColorSchemePreference? preference, string? returnUrl)
+	[AllowAnonymous]
+	[HttpPost("/color-scheme")]
+	[ValidateAntiForgeryToken]
+	public IActionResult ColorScheme(ColorSchemePreference? preference, string? returnUrl)
 		{
 			if (preference != null)
 			{
@@ -109,7 +112,8 @@ namespace AIDungeonPrompts.Web.Controllers
 			return View(result);
 		}
 
-		[HttpGet("/whats-new")]
-		public IActionResult WhatsNew() => View();
+	[AllowAnonymous]
+	[HttpGet("/whats-new")]
+	public IActionResult WhatsNew() => View();
 	}
 }

@@ -1,5 +1,19 @@
 @using AIDungeonPrompts.Application.Queries.SearchPrompts
+@inject AIDungeonPrompts.Application.Abstractions.Identity.ICurrentUserService userService
 @model SearchViewModel
+
+@{
+	if (!userService.TryGetCurrentUser(out var currentUser))
+	{
+		<div class="alert alert-warning">
+			<h4>Please Log In</h4>
+			<p>You must be logged in to search and view prompts.</p>
+			<a class="btn btn-primary" asp-controller="User" asp-action="LogIn">Log In</a>
+			<a class="btn btn-secondary" asp-controller="User" asp-action="Register">Register</a>
+		</div>
+		return;
+	}
+}
 
 <!-- <div class="alert alert-danger">/aidg/ Prompts will be becoming read-only on 2022/07/17. <a asp-action="WhatsNew">Click here to read more.</a></div> -->
 

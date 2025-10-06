@@ -50,7 +50,9 @@
 			        aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
 			</button>
-			<div class="navbar-collapse collapse d-sm-inline-flex">
+		<div class="navbar-collapse collapse d-sm-inline-flex">
+			@if (user != null)
+			{
 				<ul class="navbar-nav">
 					<li class="nav-item">
 						<a class="nav-link" asp-controller="Prompts" asp-action="Create">Create</a>
@@ -66,15 +68,13 @@
 						<a class="nav-link" asp-fragment="userscript-update" asp-controller="Home" asp-action="WhatsNew">Userscript</a>
 					</li>
 				</ul>
-				<ul class="navbar-nav mr-auto">
-					<li class="nav-item">
-						<a class="nav-link" asp-fragment="backup-update" asp-controller="Home" asp-action="WhatsNew">Backups</a>
-					</li>
-				</ul>
+			<ul class="navbar-nav mr-auto">
+				<li class="nav-item">
+					<a class="nav-link" asp-fragment="backup-update" asp-controller="Home" asp-action="WhatsNew">Backups</a>
+				</li>
+			</ul>
 
-				@if (user != null)
-				{
-					@if (RoleHelper.CanEdit(user.Role))
+				@if (RoleHelper.CanEdit(user.Role))
 					{
 						<ul class="navbar-nav">
 							<li class="nav-item">
