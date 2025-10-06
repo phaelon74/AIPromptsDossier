@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AIDungeonPrompts.Application.Abstractions.Identity;
@@ -17,24 +18,28 @@ namespace AIDungeonPrompts.Infrastructure.Identity
 			_logger = logger;
 		}
 
-		public async Task InvokeAsync(HttpContext context, ICurrentUserService currentUserService)
+	public async Task InvokeAsync(HttpContext context, ICurrentUserService currentUserService)
+	{
+		_logger.LogInformation($"CurrentUserMiddleware: User authenticated={context.User.Identity?.IsAuthenticated}, Claims count={context.User.Claims.Count()}");
+		
+		Claim? userIdClaim = context.User.FindFirst(e => e.Type == ClaimTypes.NameIdentifier);
+		if (userIdClaim == null)
 		{
-			Claim? userIdClaim = context.User.FindFirst(e => e.Type == ClaimTypes.NameIdentifier);
-			if (userIdClaim == null)
-			{
-				await _next(context);
-				return;
-			}
-
-			if (!int.TryParse(userIdClaim.Value, out var id))
-			{
-				_logger.LogError($"Could not parse user id {userIdClaim.Value} as int");
-				await _next(context);
-				return;
-			}
-
-			await currentUserService.SetCurrentUser(id);
+			_logger.LogWarning("CurrentUserMiddleware: No NameIdentifier claim found");
 			await _next(context);
+			return;
 		}
+
+		if (!int.TryParse(userIdClaim.Value, out var id))
+		{
+			_logger.LogError($"Could not parse user id {userIdClaim.Value} as int");
+			await _next(context);
+			return;
+		}
+
+		_logger.LogInformation($"CurrentUserMiddleware: Setting current user to ID {id}");
+		await currentUserService.SetCurrentUser(id);
+		await _next(context);
+	}
 	}
 }
