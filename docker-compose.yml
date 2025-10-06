@@ -31,8 +31,8 @@ services:
     volumes:
       - /media/main/AIPromptDossier/backups:/AIPromptDossier/backups
     environment:
-      - ConnectionStrings__AIDungeonPrompt=Host=db;Port=5432;Database=aidungeonprompts;Username=aidungeonprompts_user
-      - Serilog__WriteTo__1__Args__connectionString=Host=db;Port=5432;Database=aidungeonprompts;Username=aidungeonprompts_user
+      - ConnectionStrings__AIDungeonPrompt=Host=db;Port=5432;Database=aidungeonprompts;Username=aidungeonprompts_user;Password=${DB_PASSWORD}
+      - Serilog__WriteTo__1__Args__connectionString=Host=db;Port=5432;Database=aidungeonprompts;Username=aidungeonprompts_user;Password=${DB_PASSWORD}
       - ASPNETCORE_ENVIRONMENT=Production
       - DB_PASSWORD=${DB_PASSWORD}
     networks:
