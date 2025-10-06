@@ -241,82 +241,11 @@ namespace AIDungeonPrompts.Web
 				"Please ensure appsettings.json or environment variables are properly configured.");
 		}
 		
-		// Read password from environment variable or Docker Secret
-		var password = System.Environment.GetEnvironmentVariable("DB_PASSWORD");
-		Log.Information($"DB_PASSWORD from environment: {(string.IsNullOrWhiteSpace(password) ? "NULL/EMPTY" : "FOUND")}");
-		
-		if (string.IsNullOrWhiteSpace(password) && File.Exists(ConfigurationConstants.DatabasePasswordSecretPath))
-		{
-			try
-			{
-				password = File.ReadAllText(ConfigurationConstants.DatabasePasswordSecretPath).Trim();
-				Log.Information("DB_PASSWORD read from secrets file");
-			}
-			catch (UnauthorizedAccessException)
-			{
-				// Secrets file exists but can't be read due to permissions
-				// This is acceptable - password might be in connection string or not needed yet
-				Log.Warning("Could not read secrets file due to permissions");
-			}
-			catch (IOException)
-			{
-				// IO error reading secrets file - acceptable, password might be elsewhere
-				Log.Warning("Could not read secrets file due to IO error");
-			}
-		}
-		
-		if (!string.IsNullOrWhiteSpace(password))
-		{
-			connectionString += $"Password={password};";
-			Log.Information("Password added to connection string");
-		}
-		else
-		{
-			Log.Warning("No password found - connection string has no password!");
-		}
+		// Connection string is now fully configured via environment variables in docker-compose.yml
+		// No need to add password here anymore
 		
 		return connectionString;
 	}
 
-	private string GetSerilogConnectionString()
-	{
-		var connectionString = Configuration.GetConnectionString(DatabaseConnectionName);
-		
-		// Read password from environment variable or Docker Secret
-		var password = System.Environment.GetEnvironmentVariable("DB_PASSWORD");
-		Log.Information($"Serilog - DB_PASSWORD from environment: {(string.IsNullOrWhiteSpace(password) ? "NULL/EMPTY" : "FOUND")}");
-		
-		if (string.IsNullOrWhiteSpace(password) && File.Exists(ConfigurationConstants.SerilogPasswordSecretPath))
-		{
-			try
-			{
-				password = File.ReadAllText(ConfigurationConstants.SerilogPasswordSecretPath).Trim();
-				Log.Information("Serilog - DB_PASSWORD read from secrets file");
-			}
-			catch (UnauthorizedAccessException)
-			{
-				// Secrets file exists but can't be read due to permissions
-				// This is acceptable - password might be in connection string or not needed yet
-				Log.Warning("Serilog - Could not read secrets file due to permissions");
-			}
-			catch (IOException)
-			{
-				// IO error reading secrets file - acceptable, password might be elsewhere
-				Log.Warning("Serilog - Could not read secrets file due to IO error");
-			}
-		}
-		
-		if (!string.IsNullOrWhiteSpace(password))
-		{
-			connectionString += $"Password={password};";
-			Log.Information("Serilog - Password added to connection string");
-		}
-		else
-		{
-			Log.Warning("Serilog - No password found - connection string has no password!");
-		}
-		
-		return connectionString;
-	}
 }
 }
