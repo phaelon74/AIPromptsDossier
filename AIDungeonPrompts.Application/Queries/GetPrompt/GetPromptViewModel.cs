@@ -8,6 +8,7 @@ namespace AIDungeonPrompts.Application.Queries.GetPrompt
 	{
 		public int Id { get; set; }
 		public string Title { get; set; } = string.Empty;
+		public string PromptContent { get; set; } = string.Empty;
 	}
 
 	public class GetPromptViewModel

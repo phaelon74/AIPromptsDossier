@@ -168,3 +168,37 @@ code.card-text {
 	margin: 1.5rem 0;
 	box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
 }
+
+/* Sub-scenario expand/collapse styles */
+.sub-scenario-toggle {
+	color: #6c757d;
+	text-decoration: none;
+	transition: color 0.2s ease;
+	border: none;
+	background: none;
+	cursor: pointer;
+	outline: none;
+}
+
+.sub-scenario-toggle:hover {
+	color: #007bff;
+	text-decoration: none;
+}
+
+.sub-scenario-toggle:focus {
+	outline: none;
+	box-shadow: none;
+}
+
+.sub-scenario-caret {
+	transition: transform 0.2s ease;
+	transform: rotate(0deg);
+}
+
+.sub-scenario-caret.expanded {
+	transform: rotate(90deg);
+}
+
+.sub-scenario-content {
+	overflow: hidden;
+}

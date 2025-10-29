@@ -69,7 +69,9 @@ namespace AIDungeonPrompts.Application.Queries.GetPrompt
 					IsDraft = prompt.IsDraft,
 					Children = prompt.Children.Select(child => new GetPromptChild
 					{
-						Id = child.Id, Title = child.Title
+						Id = child.Id, 
+						Title = child.Title,
+						PromptContent = child.PromptContent
 					}),
 					HasScriptFile = prompt.ScriptZip != null,
 					NovelAiScenario = prompt.NovelAiScenario,

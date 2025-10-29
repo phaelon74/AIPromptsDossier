@@ -22,4 +22,25 @@
 			alert(`There was an error copying to clipboard: ${err}`);
 		}
 	})
+
+	// Sub-scenario expand/collapse functionality
+	$('.sub-scenario-toggle').on('click', function() {
+		const button = $(this);
+		const targetId = button.data('target');
+		const content = $('#' + targetId);
+		const caret = button.find('.sub-scenario-caret');
+		const isExpanded = button.attr('aria-expanded') === 'true';
+
+		if (isExpanded) {
+			// Collapse
+			content.slideUp(200);
+			caret.removeClass('expanded');
+			button.attr('aria-expanded', 'false');
+		} else {
+			// Expand
+			content.slideDown(200);
+			caret.addClass('expanded');
+			button.attr('aria-expanded', 'true');
+		}
+	});
 });

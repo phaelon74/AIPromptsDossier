@@ -1,14 +1,27 @@
 @model AIDungeonPrompts.Application.Queries.GetPrompt.GetPromptChild
 
-<div class="card mb-4">
-	<div class="card-body d-flex">
-		<a class="w-100 text-info m-auto" asp-controller="Prompts" asp-action="View" asp-route-id="@Model.Id">
-			<h5 class="m-0">@Model.Title</h5>
-		</a>
-		<div class="m-auto">
-			<a class="btn btn btn-info" asp-controller="Prompts" asp-action="View" asp-route-id="@Model.Id">
-				View
+<div class="card mb-4 sub-scenario-card">
+	<div class="card-body">
+		<div class="d-flex align-items-center">
+			<button class="btn btn-link p-0 mr-2 sub-scenario-toggle" type="button" data-target="sub-scenario-@Model.Id" aria-expanded="false" aria-label="Toggle prompt content">
+				<svg class="sub-scenario-caret" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+					<path d="M6 4l4 4-4 4V4z"/>
+				</svg>
+			</button>
+			<a class="flex-grow-1 text-info" asp-controller="Prompts" asp-action="View" asp-route-id="@Model.Id">
+				<h5 class="m-0">@Model.Title</h5>
 			</a>
+			<div class="ml-2">
+				<a class="btn btn btn-info" asp-controller="Prompts" asp-action="View" asp-route-id="@Model.Id">
+					View
+				</a>
+			</div>
+		</div>
+		<div id="sub-scenario-@Model.Id" class="sub-scenario-content mt-3" style="display: none;">
+			<hr class="mb-3" />
+			<h6>Prompt</h6>
+			<code class="card-text pre-line d-block">@Model.PromptContent</code>
+			<div class="text-muted small mt-2">@Model.PromptContent.Length characters</div>
 		</div>
 	</div>
 </div>
