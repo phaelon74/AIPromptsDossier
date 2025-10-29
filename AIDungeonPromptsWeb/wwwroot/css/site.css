@@ -200,5 +200,10 @@ code.card-text {
 }
 
 .sub-scenario-content {
+	display: none !important;
 	overflow: hidden;
+}
+
+.sub-scenario-content.show {
+	display: block !important;
 }

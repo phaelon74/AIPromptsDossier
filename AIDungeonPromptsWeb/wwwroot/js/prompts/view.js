@@ -33,12 +33,12 @@
 
 		if (isExpanded) {
 			// Collapse
-			content.slideUp(200);
+			content.removeClass('show');
 			caret.removeClass('expanded');
 			button.attr('aria-expanded', 'false');
 		} else {
 			// Expand
-			content.slideDown(200);
+			content.addClass('show');
 			caret.addClass('expanded');
 			button.attr('aria-expanded', 'true');
 		}
